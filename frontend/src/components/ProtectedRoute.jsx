@@ -12,4 +12,4 @@ export default function ProtectedRoute({ children, hostOnly = false }) {
     return <Navigate to="/become-a-host" replace />;
   }
   return children;
-}
+}b 

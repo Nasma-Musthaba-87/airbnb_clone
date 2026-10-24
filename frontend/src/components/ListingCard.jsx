@@ -11,7 +11,8 @@ export default function ListingCard({ listing }) {
           <img src={image} alt={listing.title || "Property"} className="property-image"
             loading="lazy" onError={(e) => { e.currentTarget.style.display = "none"; }} />
         ) : (
-          <div className="property-placeholder"><span className="placeholder-icon">⌂</span><p>StayFinder stay</p></div>
+          <div className="property-placeholder"><span className="placeholder-icon">⌂</span>
+          <p>StayFinder stay</p></div>
         )}
         <span className="guest-favorite">Guest favorite</span>
       </Link>
