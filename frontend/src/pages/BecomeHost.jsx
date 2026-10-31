@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import api, { getApiError } from "../services/api";
 import { saveAuth } from "../utils/auth";
 
-export default function becomeHost() {
+export default function BecomeHost() {
   const navigate = useNavigate();
   const role = localStorage.getItem("role");
   const [loading, setLoading] = useState(false);
@@ -14,7 +14,7 @@ export default function becomeHost() {
     setLoading(true);
 
     try {
-      const response = await api.patch("/auth/becomeHost");
+      const response = await api.patch("/auth/become-host");
 
       
       saveAuth(response.data);

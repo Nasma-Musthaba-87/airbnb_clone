@@ -20,7 +20,7 @@ export default function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/listings/:id" element={<ListingDetails />} />
         <Route path="/mybookings" element={<ProtectedRoute><MyBookings /></ProtectedRoute>} />
-        <Route path="/becomeHost" element={<ProtectedRoute><BecomeHost /></ProtectedRoute>} />
+        <Route path="/become-a-host" element={<ProtectedRoute><BecomeHost /></ProtectedRoute>} />
         <Route path="/host/dashboard" element={<ProtectedRoute hostOnly><HostDashboard /></ProtectedRoute>} />
         <Route path="/host/listings/new" element={<ProtectedRoute hostOnly><ListingForm /></ProtectedRoute>} />
         <Route path="/host/listings/:id/edit" element={<ProtectedRoute hostOnly><ListingForm /></ProtectedRoute>} />
