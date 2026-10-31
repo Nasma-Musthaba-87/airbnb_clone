@@ -1,6 +1,7 @@
 const Listing = require ("../models/listing.js");
+const Review = require ("../models/review.js");
+const Booking = require("../models/booking.js");
 
-//Create new listing
 const createListing = async (req,res) => {
   try{
     const{
@@ -13,7 +14,7 @@ const createListing = async (req,res) => {
       images,
     } = req.body;
 
-    //Check required fields
+    
     if(
       !title ||
       !description ||
@@ -27,7 +28,6 @@ const createListing = async (req,res) => {
       });
     }
 
-    //Create listing in MongoDB
     console.log("Authenticate user:", req.user)
     
     const listing = await Listing.create({
@@ -54,7 +54,7 @@ const createListing = async (req,res) => {
   }
 };
 
-//Get All listings
+
 const getAllListings = async (req,res) => {
   try{
     const {
@@ -63,23 +63,23 @@ const getAllListings = async (req,res) => {
       maxPrice,
       guests,
       bedrooms,
+      checkIn,
+      checkOut,
       sort = "newest",
       page = 1,
       limit = 10,
     } = req.query;
 
-    //Build the MongoDB filter
     const filter = {};
 
-    //Filter by location
     if (location) {
+      const safeLocation = location.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       filter.location = {
-        $regex: location,
+        $regex: safeLocation,
         $options: "i",
       };
     }
 
-    //Filter by minimum price
     if(minPrice !== undefined){
       const price = Number(minPrice);
 
@@ -95,7 +95,6 @@ const getAllListings = async (req,res) => {
       };
     }
 
-    //Filter by maximum price
     if(maxPrice !== undefined){
       const price = Number(maxPrice);
 
@@ -111,7 +110,6 @@ const getAllListings = async (req,res) => {
       };
     }
 
-    //Filter by number of guests
     if(guests !== undefined){
       const numGuests = Number(guests);
 
@@ -126,7 +124,6 @@ const getAllListings = async (req,res) => {
       };
     }
 
-    //Filter by number of bedrooms
     if(bedrooms !== undefined){
       const numBedrooms = Number(bedrooms);
 
@@ -141,7 +138,29 @@ const getAllListings = async (req,res) => {
       };
     }
 
-    //Validate pagination values
+    
+    if(checkIn && checkOut){
+      const startDate = new Date(checkIn);
+      const endDate = new Date(checkOut);
+
+      if(Number.isNaN(startDate.getTime()) ||
+      Number.isNaN(endDate.getTime()) ||
+      endDate <= startDate){
+        return res.status(400).json({
+          message: "Please provide valid check-in and check-out dates",
+        });
+      }
+
+      const bookedListings = await Booking.find({
+        status: {$ne: "cancelled"},
+        checkIn: { $lt: endDate },
+        checkOut: { $gt: startDate },
+      }).distinct("listing");
+
+      filter._id = { $nin: bookedListings };
+    }
+
+    
     const pageNumber = Number(page);
     const pageSize = Number(limit);
 
@@ -153,7 +172,7 @@ const getAllListings = async (req,res) => {
       });
     }
 
-    //Determine sorting order
+    
     let sortOption;
 
     switch(sort){
@@ -175,13 +194,13 @@ const getAllListings = async (req,res) => {
         });
     }
 
-    //Count listings matching the search filters
+    
     const totalListings = await Listing.countDocuments(filter);
     
-    //Calculate how many listings to skip
+  
     const skip = (pageNumber - 1) * pageSize;
 
-    //Retrieve listings from MongoDB with filters, sorting, and pagination
+    
     const listings = await Listing.find(filter)
       .populate("host", "name email")
       .sort(sortOption)
@@ -205,7 +224,6 @@ const getAllListings = async (req,res) => {
 };
 
 
-//Get a single Listing By ID
 const getListingbyId = async (req,res) => {
   try {
     const {id} = req.params;
@@ -237,12 +255,11 @@ const getListingbyId = async (req,res) => {
   }
 };
 
-//Update a listing
 const updateListing = async (req,res) => {
   try{
     const {id} = req.params;
 
-    //Find the listing
+    
     const listing = await Listing.findById(id);
 
     if(!listing){
@@ -251,14 +268,12 @@ const updateListing = async (req,res) => {
       });
     }
 
-    //Check whether the Login user owns the listing
     if(listing.host.toString() !== req.user.userId){
       return res.status(403).json({
         message: "You are not authorized to update this listing",        
       });
     }
 
-    //Fields that can be updated
     const allowedFields = [
       "title",
       "description",
@@ -269,14 +284,14 @@ const updateListing = async (req,res) => {
       "images",
     ];
 
-    //Updated only the permitted fields
+
     allowedFields.forEach((field) => {
       if(req.body[field] !== undefined){
         listing[field] = req.body[field];
       }
     });
 
-    //Validate and save updated listing
+    
     await listing.save();
     res.status(200).json({
       message: "List updated successfully",
@@ -301,29 +316,29 @@ const updateListing = async (req,res) => {
   }
 };
 
-//Delete the list
+
 const deleteListing = async (req,res) => {
   try{
     const{id} = req.params;
 
-    //Find the listing
+    
     const listing = await Listing.findById(id);
 
-    //Check whether the listing exists
+    
     if(!listing){
       return res.status(404).json({
         message: "Listing not found",
       });
     }
 
-    //Check whether the login user owns the listing
+    
     if(listing.host.toString() !== req.user.userId){
       return res.status(403).json({
         message: "You are not authorized to delete this listing",
       });
     }
 
-    //Delete the listing
+    
     await listing.deleteOne();
 
     res.status(200).json({
@@ -343,10 +358,10 @@ const deleteListing = async (req,res) => {
   }
 };
 
-//Host Dashboard: Get all listings for the logged-in host
+
 const getHostList = async (req,res) => {
   try{
-    //Find listings owned by the logged-in host
+    
     const listings = await Listing.find({
       host: req.user.userId,
     }).sort({createdAt: -1});
@@ -364,6 +379,6 @@ const getHostList = async (req,res) => {
   }
 };
 
-module.exports = {createListing, getAllListings, 
+module.exports = {createListing, getAllListings,
   getListingbyId, updateListing, deleteListing,
   getHostList};

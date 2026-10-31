@@ -6,16 +6,19 @@ const registerUser = async (req,res) => {
   try{
     const {name,email,password,role} = req.body;
 
-    //For required fields..
     if(!name || !email || !password) {
       return res.status(400).json(
         {
           message: "Please provide the required fields name, email and password",
         });
     }
+
+    if(password.lentgth < 8){
+      return res.status(400).json({
+        message: "Password must be at least 8 characters long",
+      });
+    }
     
-  
-    //To check whether the user is already exists
     const existingUser = await User.findOne({ email });
     if(existingUser) {
       return res.status(400).json(
@@ -25,10 +28,10 @@ const registerUser = async (req,res) => {
       );
     }
 
-    //Hash password
+    
     const hashedPwd = await bcrypt.hash(password, 10);
 
-    //Create User
+    
     const user = await User.create({
       name,
       email,
@@ -115,5 +118,45 @@ const loginUser = async (req,res) => {
         }
       };
 
+const becomeHost = async (req,res) => {
+  try{
+    const user = await User.findById(req.user.userId);
+    if(!user){
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
 
-module.exports = {registerUser, loginUser};
+    user.role = "host";
+    await user.save();
+
+    const token = jwy.sign(
+      {
+        userId: user.id,
+        role: user.role,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn:"7d",
+      }
+    );
+
+    res.staus(200).json({
+      message: "You are now an Host",
+      token,
+      user:{
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch(error){
+    res.status(500).json({
+      message: "Could not upgrade your account",
+      error: error.message,
+    });
+  }
+};
+
+module.exports = {registerUser, loginUser, becomeHost};

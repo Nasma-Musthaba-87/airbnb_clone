@@ -1,11 +1,12 @@
 const express = require ("express");
+const router = express.Router();
 
-const {createListing, getAllListings, getListingbyId, 
+const {createListing, getAllListings, getListingbyId,
   updateListing, deleteListing, getHostList} = require ("../controllers/listController.js");
 
 const protect = require("../middleware/authMiddleware.js");
 
-const router = express.Router();
+//const router = express.Router();
 
 //Create a list - login required
 router.post("/", protect, createListing);

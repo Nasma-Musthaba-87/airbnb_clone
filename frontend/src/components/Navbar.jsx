@@ -20,7 +20,7 @@ export default function Navbar() {
   return (
     <header className="site-header">
       <Link to="/" className="brand" aria-label="StayFinder home">
-        <span className="brand-icon">⌂</span><span>StayFinder</span>
+        <span className="brand-icon">⌂</span><span>airbnb_clone</span>
       </Link>
 
       <nav className="main-nav">

@@ -59,6 +59,12 @@ const createBooking = async (req, res) => {
       });
     }
 
+    if (listing.host.toString() === req.user.userId) {
+      return res.status(403).json({
+        message: "You cannot book your own listing",
+      });
+    }
+
     //Check maximum guest capacity
     if (guestCount > listing.maxGuests) {
       return res.status(400).json({
